@@ -62,8 +62,7 @@ impl CompactSize {
                     return Err(BitcoinError::InsufficientBytes);
                 }
                 let val = u64::from_le_bytes([
-                    bytes[1], bytes[2], bytes[3], bytes[4],
-                    bytes[5], bytes[6], bytes[7], bytes[8],
+                    bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
                 ]);
                 Ok((CompactSize { value: val }, 9))
             }
@@ -108,7 +107,10 @@ pub struct OutPoint {
 
 impl OutPoint {
     pub fn new(txid: [u8; 32], vout: u32) -> Self {
-        OutPoint { txid: Txid(txid), vout }
+        OutPoint {
+            txid: Txid(txid),
+            vout,
+        }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -124,7 +126,13 @@ impl OutPoint {
         let mut txid = [0u8; 32];
         txid.copy_from_slice(&bytes[0..32]);
         let vout = u32::from_le_bytes([bytes[32], bytes[33], bytes[34], bytes[35]]);
-        Ok((OutPoint { txid: Txid(txid), vout }, 36))
+        Ok((
+            OutPoint {
+                txid: Txid(txid),
+                vout,
+            },
+            36,
+        ))
     }
 }
 
@@ -197,11 +205,14 @@ impl TransactionInput {
             bytes[offset1 + offset2 + 2],
             bytes[offset1 + offset2 + 3],
         ]);
-        Ok((TransactionInput {
-            previous_output: outpoint,
-            script_sig: script,
-            sequence: seq,
-        }, offset1 + offset2 + 4))
+        Ok((
+            TransactionInput {
+                previous_output: outpoint,
+                script_sig: script,
+                sequence: seq,
+            },
+            offset1 + offset2 + 4,
+        ))
     }
 }
 
@@ -214,7 +225,11 @@ pub struct BitcoinTransaction {
 
 impl BitcoinTransaction {
     pub fn new(version: u32, inputs: Vec<TransactionInput>, lock_time: u32) -> Self {
-        BitcoinTransaction { version, inputs, lock_time }
+        BitcoinTransaction {
+            version,
+            inputs,
+            lock_time,
+        }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -249,7 +264,14 @@ impl BitcoinTransaction {
             bytes[offset + 2],
             bytes[offset + 3],
         ]);
-        Ok((BitcoinTransaction { version, inputs, lock_time }, offset + 4))
+        Ok((
+            BitcoinTransaction {
+                version,
+                inputs,
+                lock_time,
+            },
+            offset + 4,
+        ))
     }
 }
 
@@ -258,9 +280,18 @@ impl fmt::Display for BitcoinTransaction {
         writeln!(f, "Version: {}", self.version)?;
         for (i, input) in self.inputs.iter().enumerate() {
             writeln!(f, "Input[{}]:", i)?;
-            writeln!(f, "  Previous Output Txid: {:x?}", input.previous_output.txid.0)?;
+            writeln!(
+                f,
+                "  Previous Output Txid: {:x?}",
+                input.previous_output.txid.0
+            )?;
             writeln!(f, "  Previous Output Vout: {}", input.previous_output.vout)?;
-            writeln!(f, "  ScriptSig ({} bytes): {:x?}", input.script_sig.bytes.len(), input.script_sig.bytes)?;
+            writeln!(
+                f,
+                "  ScriptSig ({} bytes): {:x?}",
+                input.script_sig.bytes.len(),
+                input.script_sig.bytes
+            )?;
             writeln!(f, "  Sequence: {}", input.sequence)?;
         }
         writeln!(f, "Lock Time: {}", self.lock_time)
